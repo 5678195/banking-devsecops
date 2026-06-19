@@ -1,0 +1,33 @@
+name: DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t auth-service:latest ./services/auth-service
+
+      - name: Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: auth-service:latest
+          format: table
+          exit-code: '0'
+          severity: HIGH,CRITICAL
+
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
